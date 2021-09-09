@@ -96,12 +96,9 @@ def bfs(maze):
         # Get all neighbours of the dequeued current. If a neighbour point
         # has not been visited, then mark it as visited and enqueue it
         for neighbor in maze.neighbors(curr[0], curr[1]):
-            if visited[maze.neighbor[0] * maze.size.y + maze.neighbor[1]] == False:
+            if visited[neighbor[0] * maze.size.y + neighbor[1]] == False:
                 queue.append(neighbor)
-                visited[maze.neighbor[0] * maze.size.y + maze.neighbor[1]] = True
-
-    for i in maze.waypoints:
-        print(i)
+                visited[neighbor[0] * maze.size.y + neighbor[1]] = True
 
     return path
 
