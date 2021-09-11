@@ -80,7 +80,7 @@ def bfs(maze):
 
     # Mark all the map points as not visited
     visited = [False] * (maze.size.y * maze.size.x + 1)
-    dict_visited =  defaultdict(lambda: "not present")
+    dict_visited =  {}
 
     # Create a queue and path for BFS
     queue = []
@@ -93,23 +93,24 @@ def bfs(maze):
 
     while queue:
         # Dequeue a vertex from queue and add to path
-        curr = queue.pop(0)
-        path.append(curr)
+        curr = queue[0]
+        queue.pop(0)
+        # path.append(curr)
 
         # Get all neighbours of the dequeued current. If a neighbour point
         # has not been visited, then mark it as visited and enqueue it
         for neighbor in maze.neighbors(curr[0], curr[1]):
-            if visited[neighbor[0] * maze.size.y + neighbor[1]] == False:
-                queue.append(neighbor)
-                visited[neighbor[0] * maze.size.y + neighbor[1]] = True
+            if dict_visited.get(neighbor) == None:
                 dict_visited[neighbor] = curr
+                queue.append(neighbor)
+                if neighbor == maze.waypoints[0]:
+                    break
 
     # add points to path from waypoint to start
-    # to_add = maze.waypoints[0]
-    # to_add = maze.start
-    # while dict_visited.get(to_add) != "start":
-    #     path.insert(0, to_add)
-    #     to_add = dict_visited.get(to_add)
+    to_add = maze.waypoints[0]
+    while to_add != "start":
+        path.insert(0, to_add)
+        to_add = dict_visited.get(to_add)
 
     return path
 
