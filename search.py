@@ -31,7 +31,7 @@ class MST:
         # TODO: implement some distance between two objectives 
         # ... either compute the shortest path between them, or just use the manhattan distance between the objectives
         self.distances   = {
-                (i, j): DISTANCE(i, j)
+                (i, j): abs(i[0] - j[0]) + abs(i[1] - j[1])
                 for i, j in self.cross(objectives)
             }
         
@@ -121,7 +121,7 @@ class PriorityQueue:
     def get(self):
         return heapq.heappop(self.elements)[1]
 
-def heuristic(a, b):
+def distance(a, b):
     (x1, y1) = a
     (x2, y2) = b
     return abs(x1 - x2) + abs(y1 - y2)
@@ -163,7 +163,7 @@ def astar_single(maze):
             new_cost = cost_so_far[curr]
             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
                 cost_so_far[neighbor] = new_cost
-                priority = new_cost + heuristic(neighbor, goal)
+                priority = new_cost + distance(neighbor, goal)
                 frontier.put(neighbor, priority)
                 came_from[neighbor] = curr
 
@@ -185,7 +185,16 @@ def astar_multiple(maze):
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
     start = maze.start
-    goal = maze.waypoints[0]
+    remaining_goals = []
+    for waypoint in maze.waypoints:
+        remaining_goals.insert(0, waypoint)
+    
+    reached = []
+    closest_goal = remaining_goals[0]
+    for goal in remaining_goals:
+        if distance(goal, start) < distance(closest_goal,start):
+            closest_goal = goal
+    mst = MST(remaining_goals)
 
     # Create a visited, queue and path for A*
     frontier = PriorityQueue()
@@ -200,8 +209,10 @@ def astar_multiple(maze):
     while not frontier.empty():
         curr = frontier.get()
         
-        if curr == goal:
-            break
+        # update closest goal
+        for goal in remaining_goals:
+            if distance(goal, start) < distance(closest_goal, start):
+                closest_goal = goal
 
         # Get all neighbours of the dequeued current. If a neighbour point
         # has not been visited, then mark it as visited and enqueue it
@@ -209,9 +220,20 @@ def astar_multiple(maze):
             new_cost = cost_so_far[curr]
             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
                 cost_so_far[neighbor] = new_cost
-                priority = new_cost + heuristic(neighbor, goal)
+                heuristic = distance(neighbor, closest_goal) + mst.compute_mst_weight()
+                priority = new_cost + heuristic
                 frontier.put(neighbor, priority)
                 came_from[neighbor] = curr
+            # change closest goal, remove goal from remaining, and calculate new MST
+            if curr == closest_goal:
+                remaining_goals.remove(closest_goal)
+                if not remaining_goals:
+                    break
+                reached.insert(0, closest_goal)
+                closest_goal = remaining_goals[0]
+                mst = MST(remaining_goals)
+
+
 
     # add points to path from waypoint to start
     to_add = maze.waypoints[0]
