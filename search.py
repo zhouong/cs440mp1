@@ -18,6 +18,7 @@ files and classes when code is run, so be careful to not modify anything else.
 # maze is a Maze object based on the maze from the file specified by input filename
 # searchMethod is the search method specified by --method flag (bfs,dfs,astar,astar_multi,fast)
 
+from collections import defaultdict
 
 # Feel free to use the code below as you wish
 # Initialize it with a list/tuple of objectives
@@ -79,6 +80,7 @@ def bfs(maze):
 
     # Mark all the map points as not visited
     visited = [False] * (maze.size.y * maze.size.x + 1)
+    dict_visited =  defaultdict(lambda: "not present")
 
     # Create a queue and path for BFS
     queue = []
@@ -87,6 +89,7 @@ def bfs(maze):
     # Mark start as visited and enqueue it
     queue.append(maze.start)
     visited[maze.start[0] * maze.size.y + maze.start[1]] = True
+    dict_visited[maze.start] = "start"
 
     while queue:
         # Dequeue a vertex from queue and add to path
@@ -99,6 +102,14 @@ def bfs(maze):
             if visited[neighbor[0] * maze.size.y + neighbor[1]] == False:
                 queue.append(neighbor)
                 visited[neighbor[0] * maze.size.y + neighbor[1]] = True
+                dict_visited[neighbor] = curr
+
+    # add points to path from waypoint to start
+    # to_add = maze.waypoints[0]
+    # to_add = maze.start
+    # while dict_visited.get(to_add) != "start":
+    #     path.insert(0, to_add)
+    #     to_add = dict_visited.get(to_add)
 
     return path
 
