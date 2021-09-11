@@ -184,7 +184,42 @@ def astar_multiple(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    return []
+    start = maze.start
+    goal = maze.waypoints[0]
+
+    # Create a visited, queue and path for A*
+    frontier = PriorityQueue()
+    frontier.put(start, 0)
+    came_from = {}
+    cost_so_far = {}
+    came_from[start] = "start"
+    cost_so_far[start] = 0
+    
+    path = []
+
+    while not frontier.empty():
+        curr = frontier.get()
+        
+        if curr == goal:
+            break
+
+        # Get all neighbours of the dequeued current. If a neighbour point
+        # has not been visited, then mark it as visited and enqueue it
+        for neighbor in maze.neighbors(curr[0], curr[1]):
+            new_cost = cost_so_far[curr]
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                cost_so_far[neighbor] = new_cost
+                priority = new_cost + heuristic(neighbor, goal)
+                frontier.put(neighbor, priority)
+                came_from[neighbor] = curr
+
+    # add points to path from waypoint to start
+    to_add = maze.waypoints[0]
+    while to_add != "start":
+        path.insert(0, to_add)
+        to_add = came_from.get(to_add)
+
+    return path
 
 def fast(maze):
     """
