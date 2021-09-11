@@ -7,6 +7,8 @@
 #
 # Created by Kelvin Ma (kelvinm2@illinois.edu) on 01/24/2021
 
+import heapq
+
 """
 This is the main entry point for MP1. You should only modify code
 within this file -- the unrevised staff files will be used for all other
@@ -17,8 +19,6 @@ files and classes when code is run, so be careful to not modify anything else.
 # to the positions of the path taken by your search algorithm.
 # maze is a Maze object based on the maze from the file specified by input filename
 # searchMethod is the search method specified by --method flag (bfs,dfs,astar,astar_multi,fast)
-
-from collections import defaultdict
 
 # Feel free to use the code below as you wish
 # Initialize it with a list/tuple of objectives
@@ -77,31 +77,25 @@ def bfs(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-
-    # Mark all the map points as not visited
-    visited = [False] * (maze.size.y * maze.size.x + 1)
-    dict_visited =  {}
-
-    # Create a queue and path for BFS
+    # Create a visited, queue and path for BFS
     queue = []
     path = []
+    visited = {}
 
     # Mark start as visited and enqueue it
     queue.append(maze.start)
-    visited[maze.start[0] * maze.size.y + maze.start[1]] = True
-    dict_visited[maze.start] = "start"
+    visited[maze.start] = "start"
 
     while queue:
         # Dequeue a vertex from queue and add to path
         curr = queue[0]
         queue.pop(0)
-        # path.append(curr)
 
         # Get all neighbours of the dequeued current. If a neighbour point
         # has not been visited, then mark it as visited and enqueue it
         for neighbor in maze.neighbors(curr[0], curr[1]):
-            if dict_visited.get(neighbor) == None:
-                dict_visited[neighbor] = curr
+            if visited.get(neighbor) == None:
+                visited[neighbor] = curr
                 queue.append(neighbor)
                 if neighbor == maze.waypoints[0]:
                     break
@@ -110,9 +104,27 @@ def bfs(maze):
     to_add = maze.waypoints[0]
     while to_add != "start":
         path.insert(0, to_add)
-        to_add = dict_visited.get(to_add)
+        to_add = visited.get(to_add)
 
     return path
+
+class PriorityQueue:
+    def __init__(self):
+        self.elements = []
+    
+    def empty(self):
+        return not self.elements
+    
+    def put(self, item, priority):
+        heapq.heappush(self.elements, (priority, item))
+    
+    def get(self):
+        return heapq.heappop(self.elements)[1]
+
+def heuristic(a, b):
+    (x1, y1) = a
+    (x2, y2) = b
+    return abs(x1 - x2) + abs(y1 - y2)
 
 def astar_single(maze):
     """
@@ -122,7 +134,46 @@ def astar_single(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    return []
+    # everytime check for lowest f(n) which is g(n) + h(n)
+    # h(n) = dist to goal
+    # g(n) = dist to start
+    
+    start = maze.start
+    goal = maze.waypoints[0]
+
+    # Create a visited, queue and path for A*
+    frontier = PriorityQueue()
+    frontier.put(start, 0)
+    came_from = {}
+    cost_so_far = {}
+    came_from[start] = "start"
+    cost_so_far[start] = 0
+    
+    path = []
+
+    while not frontier.empty():
+        curr = frontier.get()
+        
+        if curr == goal:
+            break
+
+        # Get all neighbours of the dequeued current. If a neighbour point
+        # has not been visited, then mark it as visited and enqueue it
+        for neighbor in maze.neighbors(curr[0], curr[1]):
+            new_cost = cost_so_far[curr]
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                cost_so_far[neighbor] = new_cost
+                priority = new_cost + heuristic(neighbor, goal)
+                frontier.put(neighbor, priority)
+                came_from[neighbor] = curr
+
+    # add points to path from waypoint to start
+    to_add = maze.waypoints[0]
+    while to_add != "start":
+        path.insert(0, to_add)
+        to_add = came_from.get(to_add)
+
+    return path
 
 def astar_multiple(maze):
     """
